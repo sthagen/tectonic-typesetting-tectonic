@@ -35,7 +35,7 @@ mod tests {
     #[test]
     fn test_new() {
         // Ensure empty and with-value set construction don't segfault
-        let _ = CFSet::new(&[]);
+        let _ = CFSet::<CFString>::new(&[]);
         let _ = CFSet::new(&[CFString::new("foo")]);
     }
 }
