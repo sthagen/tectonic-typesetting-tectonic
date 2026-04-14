@@ -84,10 +84,10 @@ mod tests {
 
         let arr = CFArray::new(&[foo.clone(), bar.clone()]);
 
-        assert_eq!(arr[0].as_type_ref(), foo.as_type_ref());
-        assert_eq!(arr[1].as_type_ref(), bar.as_type_ref());
-        assert_eq!(arr[0].as_str(), "foo");
-        assert_eq!(arr[1].as_str(), "bar");
+        assert_eq!(arr.get(0).as_type_ref(), foo.as_type_ref());
+        assert_eq!(arr.get(1).as_type_ref(), bar.as_type_ref());
+        assert_eq!(arr.get(0).as_str(), "foo");
+        assert_eq!(arr.get(1).as_str(), "bar");
     }
 
     #[test]
