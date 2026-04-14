@@ -186,7 +186,7 @@ mod tests {
         assert_eq!(str.as_str(), Cow::Borrowed("foo"));
 
         let cstr = CFString::new(c"foo");
-        assert_eq!(str.as_str(), Cow::Borrowed("foo"));
+        assert_eq!(cstr.as_str(), Cow::Borrowed("foo"));
 
         let non_str = CFString::new(c"\xC3\x28bar");
         assert_eq!(non_str.as_str(), Cow::<str>::Owned("\0\0bar".to_string()));
