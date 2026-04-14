@@ -120,7 +120,7 @@ mod tests {
         let three = CFString::new("3");
         let four = CFString::new("4");
 
-        let _ = CFDictionary::<CFString, CFString>::new(vec![]);
+        let _ = CFDictionary::<CFString, CFString>::new::<Vec<(CFString, CFString)>>(vec![]);
         let _ = CFDictionary::<CFString, CFString>::new(vec![(one, two), (three, four)]);
     }
 }
