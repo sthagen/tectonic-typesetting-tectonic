@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn test_array_len() {
-        let empty = CFArray::empty();
+        let empty = CFArray::<CFString>::empty();
         let two = CFArray::new(&[CFString::new("foo"), CFString::new("bar")]);
 
         assert!(empty.is_empty());
