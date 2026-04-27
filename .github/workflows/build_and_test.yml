@@ -40,6 +40,9 @@ jobs:
           echo "CC=clang" >> "$GITHUB_ENV"
           echo "CXX=clang++" >> "$GITHUB_ENV"
           cargo install cargo-llvm-cov
+          rustup component add llvm-tools-preview
+          llvm=$(dirname $(find $(rustc --print sysroot) -name llvm-profdata))
+          echo "PATH=$llvm:$PATH"
       - name: "cargo llvm-cov"
         run: cargo llvm-cov --workspace --include-ffi --ignore-filename-regex '/harfbuzz/' --codecov --output-path coverage.json
       - name: "Report coverage results"
