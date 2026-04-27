@@ -7,20 +7,17 @@
 //! but if you want to look at Tectonic’s default configuration and/or cache
 //! data, these are the places to go.
 
-use app_dirs2::AppDataType;
+use directories::ProjectDirs;
 use std::path::PathBuf;
+use std::sync::LazyLock;
 use std::{env, fs};
 use tectonic_errors::prelude::*;
 
-/// The instance of the `app_dirs2` crate that this crate links to.
-pub use app_dirs2;
+/// The instance of the `directories` crate that this crate links to.
+pub use directories;
 
-/// Maybe we should just make this public? But we preserve some flexibility by
-/// not doing so just yet.
-const APP_INFO: app_dirs2::AppInfo = app_dirs2::AppInfo {
-    name: "Tectonic",
-    author: "TectonicProject",
-};
+const PROJECT_DIRS: LazyLock<ProjectDirs> =
+    LazyLock::new(|| ProjectDirs::from("", "TectonicProject", "Tectonic").unwrap());
 
 /// Get the directory for per-user Tectonic configuration files.
 ///
@@ -37,7 +34,7 @@ const APP_INFO: app_dirs2::AppInfo = app_dirs2::AppInfo {
 /// - Others: `$XDG_CONFIG_HOME/Tectonic` if defined, otherwise
 ///   `$HOME/.config/Tectonic`
 pub fn get_user_config() -> Result<PathBuf> {
-    Ok(app_dirs2::get_app_root(AppDataType::UserConfig, &APP_INFO)?)
+    Ok(PROJECT_DIRS.config_dir().into_path_buf())
 }
 
 /// Get the directory for per-user Tectonic configuration files, creating it if needed.
@@ -45,7 +42,9 @@ pub fn get_user_config() -> Result<PathBuf> {
 /// This is largely the same as [`get_user_config`], but ensures that the
 /// returned directory actually exists.
 pub fn ensure_user_config() -> Result<PathBuf> {
-    Ok(app_dirs2::app_root(AppDataType::UserConfig, &APP_INFO)?)
+    let path = get_user_config()?;
+    fs::create_dir_all(&path)?;
+    Ok(path)
 }
 
 /// Get a directory for per-user Tectonic cache files, creating it if needed.
@@ -81,7 +80,7 @@ pub fn get_user_cache_dir(subdir: &str) -> Result<PathBuf> {
             fs::create_dir_all(&env_cache_path)?;
             env_cache_path
         }
-        None => app_dirs2::app_dir(AppDataType::UserCache, &APP_INFO, subdir)?,
+        None => PROJECT_DIRS.cache_dir().join(subdir),
     };
 
     Ok(cache_path)
