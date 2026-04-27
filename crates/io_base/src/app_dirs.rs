@@ -34,7 +34,7 @@ const PROJECT_DIRS: LazyLock<ProjectDirs> =
 /// - Others: `$XDG_CONFIG_HOME/Tectonic` if defined, otherwise
 ///   `$HOME/.config/Tectonic`
 pub fn get_user_config() -> Result<PathBuf> {
-    Ok(PROJECT_DIRS.config_dir().into_path_buf())
+    Ok(PROJECT_DIRS.config_dir().to_path_buf())
 }
 
 /// Get the directory for per-user Tectonic configuration files, creating it if needed.
