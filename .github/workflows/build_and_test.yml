@@ -42,7 +42,8 @@ jobs:
           cargo install cargo-llvm-cov
           rustup component add llvm-tools-preview
           llvm=$(dirname $(find $(rustc --print sysroot) -name llvm-profdata))
-          echo "PATH=$llvm:$PATH"
+          echo "LLVM_COV=$llvm/llvm-cov" >> "$GITHUB_ENV"
+          echo "LLVM_PROFDATA=$llvm/llvm-profdata" >> "$GITHUB_ENV"
       - name: "cargo llvm-cov"
         run: cargo llvm-cov --workspace --include-ffi --ignore-filename-regex '/harfbuzz/' --codecov --output-path coverage.json
       - name: "Report coverage results"
