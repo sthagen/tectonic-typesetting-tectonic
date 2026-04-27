@@ -10,16 +10,23 @@
 use directories::ProjectDirs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
-use std::{env, fs};
+use std::{env, fs, io};
 use tectonic_errors::prelude::*;
 
 /// The instance of the `directories` crate that this crate links to.
 pub use directories;
 
-const PROJECT_DIRS: LazyLock<Result<ProjectDirs>> = LazyLock::new(|| {
-    ProjectDirs::from("", "TectonicProject", "Tectonic")
-        .ok_or_else(|| Error::from("Unable to find standard directories for platform"))
-});
+static PROJECT_DIRS: LazyLock<Option<ProjectDirs>> =
+    LazyLock::new(|| ProjectDirs::from("", "TectonicProject", "Tectonic"));
+
+fn dirs() -> Result<&'static ProjectDirs> {
+    PROJECT_DIRS.as_ref().ok_or_else(|| {
+        Error::from(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Unable to find standard directories for platform",
+        ))
+    })
+}
 
 /// Get the directory for per-user Tectonic configuration files.
 ///
@@ -36,7 +43,7 @@ const PROJECT_DIRS: LazyLock<Result<ProjectDirs>> = LazyLock::new(|| {
 /// - Others: `$XDG_CONFIG_HOME/Tectonic` if defined, otherwise
 ///   `$HOME/.config/Tectonic`
 pub fn get_user_config() -> Result<PathBuf> {
-    Ok(PROJECT_DIRS?.config_dir().to_path_buf())
+    Ok(dirs()?.config_dir().to_path_buf())
 }
 
 /// Get the directory for per-user Tectonic configuration files, creating it if needed.
@@ -82,7 +89,7 @@ pub fn get_user_cache_dir(subdir: &str) -> Result<PathBuf> {
             fs::create_dir_all(&env_cache_path)?;
             env_cache_path
         }
-        None => PROJECT_DIRS?.cache_dir().join(subdir),
+        None => dirs()?.cache_dir().join(subdir),
     };
 
     Ok(cache_path)
