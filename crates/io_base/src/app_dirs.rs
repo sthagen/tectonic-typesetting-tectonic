@@ -16,8 +16,10 @@ use tectonic_errors::prelude::*;
 /// The instance of the `directories` crate that this crate links to.
 pub use directories;
 
-const PROJECT_DIRS: LazyLock<ProjectDirs> =
-    LazyLock::new(|| ProjectDirs::from("", "TectonicProject", "Tectonic").unwrap());
+const PROJECT_DIRS: LazyLock<Result<ProjectDirs>> = LazyLock::new(|| {
+    ProjectDirs::from("", "TectonicProject", "Tectonic")
+        .ok_or_else(|| Error::from("Unable to find standard directories for platform"))
+});
 
 /// Get the directory for per-user Tectonic configuration files.
 ///
@@ -25,8 +27,8 @@ const PROJECT_DIRS: LazyLock<ProjectDirs> =
 /// exists. The function [`ensure_user_config`] makes sure that the directory is
 /// created.
 ///
-/// This function is currently implemented with [`app_dirs2::get_app_root`] using
-/// the `UserConfig` data type. Return values have the form:
+/// This function is currently implemented with [`ProjectDirs::config_dir`] using
+/// the `ProjectDirs` data type. Return values have the form:
 ///
 /// - Windows: `%APPDATA%\TectonicProject\Tectonic`, where `%APPDATA%` is
 ///   something like `C:\Users\knuth\AppData\Roaming`.
@@ -34,7 +36,7 @@ const PROJECT_DIRS: LazyLock<ProjectDirs> =
 /// - Others: `$XDG_CONFIG_HOME/Tectonic` if defined, otherwise
 ///   `$HOME/.config/Tectonic`
 pub fn get_user_config() -> Result<PathBuf> {
-    Ok(PROJECT_DIRS.config_dir().to_path_buf())
+    Ok(PROJECT_DIRS?.config_dir().to_path_buf())
 }
 
 /// Get the directory for per-user Tectonic configuration files, creating it if needed.
@@ -53,8 +55,8 @@ pub fn ensure_user_config() -> Result<PathBuf> {
 /// should be a forward slash on all platforms. It may be an empty string if you
 /// want to get the toplevel user cache directory.
 ///
-/// This function is currently implemented with [`app_dirs2::app_dir`] using the
-/// `UserCache` data type. Return values have the form:
+/// This function is currently implemented with [`ProjectDirs::cache_dir`] using the
+/// `ProjectDirs` data type. Return values have the form:
 ///
 /// - Windows: `%LOCALAPPDATA%\TectonicProject\Tectonic`, where `%LOCALAPPDATA%`
 ///   is something like `C:\Users\knuth\AppData\Local`.
@@ -63,12 +65,12 @@ pub fn ensure_user_config() -> Result<PathBuf> {
 ///   `$HOME/.cache/Tectonic`
 ///
 ///
-/// The cache location defaults to the `AppDataType::UserCache`
-/// provided by `app_dirs2` but can be overwritten using the
+/// The cache location defaults to the `ProjectDirs::cache_dir`
+/// provided by `directories` but can be overwritten using the
 /// `TECTONIC_CACHE_DIR` environment variable.
 ///
 /// This method may perform I/O to create the user cache directory, so it is
-/// fallible. (Due to its `app_dirs2` implementation, it would have to be
+/// fallible. (Due to its `directories` implementation, it would have to be
 /// fallible even if it didn't perform I/O.)
 pub fn get_user_cache_dir(subdir: &str) -> Result<PathBuf> {
     let env_cache_path = env::var_os("TECTONIC_CACHE_DIR");
@@ -80,8 +82,28 @@ pub fn get_user_cache_dir(subdir: &str) -> Result<PathBuf> {
             fs::create_dir_all(&env_cache_path)?;
             env_cache_path
         }
-        None => PROJECT_DIRS.cache_dir().join(subdir),
+        None => PROJECT_DIRS?.cache_dir().join(subdir),
     };
 
     Ok(cache_path)
+}
+
+/// Borrowed from `app_dirs2`, convert any string into a consistently valid file or directory name.
+pub fn sanitize(component: &str) -> String {
+    let mut buf = String::with_capacity(component.len());
+    for (i, c) in component.chars().enumerate() {
+        let is_alnum = c.is_ascii_alphanumeric();
+        let is_space = c == ' ';
+        let is_hyphen = c == '-';
+        let is_underscore = c == '_';
+        let is_period = c == '.' && i != 0; // Disallow accidentally hidden folders
+        let is_valid = is_alnum || is_space || is_hyphen || is_underscore || is_period;
+        if is_valid {
+            buf.push(c);
+        } else {
+            use std::fmt::Write;
+            let _ = write!(&mut buf, ",{},", c as u32);
+        }
+    }
+    buf
 }
