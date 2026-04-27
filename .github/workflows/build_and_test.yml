@@ -37,13 +37,13 @@ jobs:
         uses: ./.github/actions/pkgconfig-deps
       - name: "Set up code coverage"
         run: |
-          echo "CC=clang" >> "$GITHUB_ENV"
-          echo "CXX=clang++" >> "$GITHUB_ENV"
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 20
+          
+          echo "CC=clang-20" >> "$GITHUB_ENV"
+          echo "CXX=clang++-20" >> "$GITHUB_ENV"
           cargo install cargo-llvm-cov
-          rustup component add llvm-tools-preview
-          llvm=$(dirname $(find $(rustc --print sysroot) -name llvm-profdata))
-          echo "LLVM_COV=$llvm/llvm-cov" >> "$GITHUB_ENV"
-          echo "LLVM_PROFDATA=$llvm/llvm-profdata" >> "$GITHUB_ENV"
       - name: "cargo llvm-cov"
         run: cargo llvm-cov --workspace --include-ffi --ignore-filename-regex '/harfbuzz/' --codecov --output-path coverage.json
       - name: "Report coverage results"
