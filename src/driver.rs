@@ -2147,7 +2147,7 @@ impl ProcessingSession {
                 }
 
                 (State::InBinaryName, Event::Text(ref e)) => {
-                    let text = e.unescape()?;
+                    let text = e.decode()?;
 
                     state = if &text == "biber" {
                         State::InBiberCmdline
@@ -2186,7 +2186,7 @@ impl ProcessingSession {
                 }
 
                 (State::InBiberArgument, Event::Text(ref e)) => {
-                    argv.push(e.unescape()?.to_string());
+                    argv.push(e.decode()?.to_string());
                     state = State::InBiberCmdline;
                 }
 
@@ -2237,7 +2237,7 @@ impl ProcessingSession {
                 }
 
                 (State::InBiberFileRequirement, Event::Text(ref e)) => {
-                    extra_requires.insert(e.unescape()?.to_string());
+                    extra_requires.insert(e.decode()?.to_string());
                     state = State::InBiberRequirementSection;
                 }
 
